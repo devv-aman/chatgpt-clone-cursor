@@ -12,6 +12,8 @@ import type {
   MessagesResponse,
   ChatsResponse,
   SSEEvent,
+  Usage,
+  MessageWithUsage,
 } from './chat.schema.js';
 import type { Message, Chat, MessageInsert } from '../../db/types.js';
 
@@ -76,7 +78,8 @@ export const saveMessage = async (
   role: string,
   content: string,
   modelId?: string | null,
-  modelName?: string | null
+  modelName?: string | null,
+  usage?: Usage | null
 ): Promise<Message> => {
   const adminClient = getSupabaseAdminClient();
 
@@ -86,6 +89,9 @@ export const saveMessage = async (
     content,
     model_id: modelId ?? null,
     model_name: modelName ?? null,
+    prompt_tokens: usage?.prompt_tokens ?? null,
+    completion_tokens: usage?.completion_tokens ?? null,
+    tokens_used: usage?.total_tokens ?? null,
   };
 
   const { data, error } = await adminClient
@@ -100,6 +106,25 @@ export const saveMessage = async (
   }
 
   return data;
+};
+
+// Transform a database message to include usage object
+const transformMessageWithUsage = (message: Message): MessageWithUsage => {
+  const { prompt_tokens, completion_tokens, tokens_used, ...rest } = message;
+  
+  // Only include usage if we have token data
+  const hasUsage = prompt_tokens !== null || completion_tokens !== null || tokens_used !== null;
+  
+  return {
+    ...rest,
+    usage: hasUsage
+      ? {
+          prompt_tokens: prompt_tokens ?? 0,
+          completion_tokens: completion_tokens ?? 0,
+          total_tokens: tokens_used ?? (prompt_tokens ?? 0) + (completion_tokens ?? 0),
+        }
+      : null,
+  };
 };
 
 export const getMessagesForChat = async (
@@ -139,8 +164,11 @@ export const getMessagesForChat = async (
     throw new InternalServerError(ERROR_MESSAGES.SERVER.DATABASE_ERROR);
   }
 
+  // Transform messages to include usage object
+  const messagesWithUsage = (data || []).map(transformMessageWithUsage);
+
   return {
-    messages: data || [],
+    messages: messagesWithUsage,
     total: count || 0,
   };
 };
@@ -164,7 +192,7 @@ export const getUserChats = async (
     throw new InternalServerError(ERROR_MESSAGES.SERVER.DATABASE_ERROR);
   }
 
-  // Get chats with message counts
+  // Get chats
   const { data, error } = await adminClient
     .from('chats')
     .select('*')
@@ -178,8 +206,37 @@ export const getUserChats = async (
     throw new InternalServerError(ERROR_MESSAGES.SERVER.DATABASE_ERROR);
   }
 
+  // Get total tokens for each chat
+  const chatIds = (data || []).map((chat) => chat.id);
+  
+  let tokensByChat: Record<string, number> = {};
+  
+  if (chatIds.length > 0) {
+    // Aggregate tokens_used for each chat
+    const { data: tokenData, error: tokenError } = await adminClient
+      .from('messages')
+      .select('chat_id, tokens_used')
+      .in('chat_id', chatIds)
+      .is('deleted_at', null);
+
+    if (!tokenError && tokenData) {
+      tokensByChat = tokenData.reduce((acc, msg) => {
+        if (msg.tokens_used) {
+          acc[msg.chat_id] = (acc[msg.chat_id] || 0) + msg.tokens_used;
+        }
+        return acc;
+      }, {} as Record<string, number>);
+    }
+  }
+
+  // Attach total_tokens to each chat
+  const chatsWithTokens = (data || []).map((chat) => ({
+    ...chat,
+    total_tokens: tokensByChat[chat.id] || 0,
+  }));
+
   return {
-    chats: data || [],
+    chats: chatsWithTokens,
     total: count || 0,
   };
 };
@@ -236,6 +293,7 @@ const streamInBackground = async (
 ): Promise<void> => {
   const { chatId, streamId, model, abortController } = context;
   let accumulatedContent = '';
+  let tokenUsage: Usage | null = null;
 
   try {
     // Fetch previous messages for context
@@ -253,12 +311,13 @@ const streamInBackground = async (
       content: msg.content,
     }));
 
-    // Start OpenAI stream
+    // Start OpenAI stream with usage tracking enabled
     const stream = await openai.chat.completions.create(
       {
         model,
         messages,
         stream: true,
+        stream_options: { include_usage: true },
       },
       {
         signal: abortController.signal,
@@ -272,6 +331,16 @@ const streamInBackground = async (
         break;
       }
 
+      // Capture usage from the final chunk (it has usage but no content)
+      if (chunk.usage) {
+        tokenUsage = {
+          prompt_tokens: chunk.usage.prompt_tokens,
+          completion_tokens: chunk.usage.completion_tokens,
+          total_tokens: chunk.usage.total_tokens,
+        };
+        logger.info({ streamId, usage: tokenUsage }, 'Token usage captured');
+      }
+
       const delta = chunk.choices[0]?.delta?.content;
       if (delta) {
         accumulatedContent += delta;
@@ -282,23 +351,26 @@ const streamInBackground = async (
       }
     }
 
-    // Save the complete assistant message
+    // Save the complete assistant message with token usage
     if (accumulatedContent) {
       const savedMessage = await saveMessage(
         chatId,
         MESSAGE_ROLES.ASSISTANT,
         accumulatedContent,
         model,
-        model
+        model,
+        tokenUsage
       );
 
       // Update stream status
       await streamService.updateStreamStatus(streamId, STREAM_CONSTANTS.STATUS.COMPLETED);
 
-      sendEvent({
+      const doneEvent: SSEEvent = {
         type: CHAT_CONSTANTS.SSE.EVENT_TYPES.DONE,
         messageId: savedMessage.id,
-      });
+        ...(tokenUsage && { usage: tokenUsage }),
+      };
+      sendEvent(doneEvent);
     }
   } catch (error) {
     // Handle abort error gracefully
@@ -312,7 +384,8 @@ const streamInBackground = async (
           MESSAGE_ROLES.ASSISTANT,
           accumulatedContent,
           model,
-          model
+          model,
+          tokenUsage
         );
       }
       

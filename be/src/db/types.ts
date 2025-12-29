@@ -27,6 +27,8 @@ export interface Message {
   model_id: string | null;
   model_name: string | null;
   tokens_used: number | null;
+  prompt_tokens: number | null;
+  completion_tokens: number | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -63,6 +65,8 @@ export type MessageInsert = {
   model_id?: string | null;
   model_name?: string | null;
   tokens_used?: number | null;
+  prompt_tokens?: number | null;
+  completion_tokens?: number | null;
   created_at?: string;
   updated_at?: string;
   deleted_at?: string | null;

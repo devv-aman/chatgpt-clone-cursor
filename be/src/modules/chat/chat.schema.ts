@@ -49,6 +49,18 @@ export const chatsQuerySchema = z.object({
 
 export type ChatsQuery = z.infer<typeof chatsQuerySchema>;
 
+// Token usage types
+export interface Usage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+}
+
+// Message with usage object for API responses
+export interface MessageWithUsage extends Omit<Message, 'prompt_tokens' | 'completion_tokens' | 'tokens_used'> {
+  usage: Usage | null;
+}
+
 // Response types
 export interface SessionEvent {
   type: 'session';
@@ -64,6 +76,7 @@ export interface ContentEvent {
 export interface DoneEvent {
   type: 'done';
   messageId: string;
+  usage?: Usage;
 }
 
 export interface ErrorEvent {
@@ -75,10 +88,11 @@ export type SSEEvent = SessionEvent | ContentEvent | DoneEvent | ErrorEvent;
 
 export interface ChatResponse extends Chat {
   messageCount?: number;
+  total_tokens?: number;
 }
 
 export interface MessagesResponse {
-  messages: Message[];
+  messages: MessageWithUsage[];
   total: number;
 }
 
