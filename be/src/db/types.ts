@@ -70,6 +70,28 @@ export type MessageInsert = {
 
 export type MessageUpdate = Partial<Omit<Message, 'id' | 'chat_id'>>;
 
+export interface UserSettings {
+  id: string;
+  user_id: string;
+  openai_api_key_encrypted: string | null;
+  openai_api_key_iv: string | null;
+  openai_api_key_tag: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type UserSettingsInsert = {
+  id?: string;
+  user_id: string;
+  openai_api_key_encrypted?: string | null;
+  openai_api_key_iv?: string | null;
+  openai_api_key_tag?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type UserSettingsUpdate = Partial<Omit<UserSettings, 'id' | 'user_id'>>;
+
 export interface Database {
   public: {
     Tables: {
@@ -87,6 +109,11 @@ export interface Database {
         Row: Message;
         Insert: MessageInsert;
         Update: MessageUpdate;
+      };
+      user_settings: {
+        Row: UserSettings;
+        Insert: UserSettingsInsert;
+        Update: UserSettingsUpdate;
       };
     };
   };

@@ -7,6 +7,8 @@ import { swaggerSpec, SWAGGER_CONSTANTS } from './config/swagger.js';
 import { requestLogger } from './middleware/logger.middleware.js';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
 import { authRouter } from './modules/auth/index.js';
+import { settingsRouter } from './modules/settings/index.js';
+import { chatRouter, chatsRouter } from './modules/chat/index.js';
 import { API_CONFIG, API_ROUTES, HTTP_STATUS } from './constants/api.js';
 import { STRINGS } from './constants/strings.js';
 import type { ApiResponse } from './types/common.types.js';
@@ -81,6 +83,9 @@ export const createApp = (): Express => {
 
   // API routes
   app.use(`${API_CONFIG.FULL_PREFIX}${API_ROUTES.AUTH.BASE}`, authRouter);
+  app.use(`${API_CONFIG.FULL_PREFIX}${API_ROUTES.SETTINGS.BASE}`, settingsRouter);
+  app.use(`${API_CONFIG.FULL_PREFIX}${API_ROUTES.CHAT.BASE}`, chatRouter);
+  app.use(`${API_CONFIG.FULL_PREFIX}${API_ROUTES.CHATS.BASE}`, chatsRouter);
 
   // 404 handler
   app.use(notFoundHandler);

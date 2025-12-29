@@ -12,7 +12,7 @@
 <features>
     - Node.js
     - TypeScript
-    - Supabase (Auth + DB)
+    - Supabase (Just DB)
     - Express
     - JWT
     - Zod
@@ -32,7 +32,8 @@
     - Setup a global authentication middleware for the backend.
     - Setup a global error handling middleware for the backend.
     - Setup a global logging middleware for the backend using Pino.
-    - Use Supabase Auth directly with profiles table for additional user data, do not store password in profiles table, Let Supabase handle the password hashing and verification.
+    - Use Supabase just for the database, do not use Supabase Auth for authentication, use JWT for authentication.
+    - 
     - Create Swagger documentation for the backend using swagger-jsdoc and swagger-ui-express.
     - Create a swagger.json file in the root of the project.
 
@@ -59,6 +60,7 @@
     - Setup routes for the following endpoints:
         - (Register & Login) POST /api/v1/auth/register
         - (Login)POST /api/v1/auth/login
+        - (Refresh Token) POST /api/v1/auth/refresh
         - (Logout) POST /api/v1/auth/logout
         - (Get User Details) GET /api/v1/auth/me
 

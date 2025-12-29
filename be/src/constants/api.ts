@@ -11,6 +11,20 @@ export const API_ROUTES = {
     LOGIN: '/login',
     LOGOUT: '/logout',
     ME: '/me',
+    REFRESH: '/refresh',
+  },
+  SETTINGS: {
+    BASE: '/settings',
+    OPENAI_KEY: '/openai-key',
+  },
+  CHAT: {
+    BASE: '/chat',
+    STREAM: '/stream',
+    STOP: '/stop',
+  },
+  CHATS: {
+    BASE: '/chats',
+    MESSAGES: '/messages',
   },
   HEALTH: '/health',
 } as const;
@@ -31,6 +45,7 @@ export const HTTP_STATUS = {
 
 export const CONTENT_TYPES = {
   JSON: 'application/json',
+  EVENT_STREAM: 'text/event-stream',
 } as const;
 
 export const HEADERS = {

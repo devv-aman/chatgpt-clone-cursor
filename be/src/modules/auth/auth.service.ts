@@ -4,7 +4,7 @@ import { ConflictError, UnauthorizedError, InternalServerError } from '../../uti
 import { ERROR_MESSAGES, ERROR_CODES } from '../../constants/index.js';
 import { USER_ROLES } from '../../constants/strings.js';
 import { logger } from '../../utils/logger.js';
-import type { RegisterInput, LoginInput, AuthResponse, UserResponse, RegisterResponse } from './auth.schema.js';
+import type { RegisterInput, LoginInput, RefreshTokenInput, AuthResponse, UserResponse, RegisterResponse } from './auth.schema.js';
 
 export interface AuthTokens {
   accessToken: string;
@@ -187,10 +187,32 @@ export const getCurrentUser = async (userId: string): Promise<UserResponse> => {
   return mapProfileToUserResponse(profile);
 };
 
+export const refreshToken = async (input: RefreshTokenInput): Promise<AuthTokens> => {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase.auth.refreshSession({
+    refresh_token: input.refreshToken,
+  });
+
+  if (error || !data.session) {
+    logger.warn({ error }, 'Token refresh failed');
+    throw new UnauthorizedError(
+      ERROR_MESSAGES.AUTH.TOKEN_INVALID,
+      ERROR_CODES.TOKEN_INVALID
+    );
+  }
+
+  return {
+    accessToken: data.session.access_token,
+    refreshToken: data.session.refresh_token,
+  };
+};
+
 export const authService = {
   register,
   login,
   logout,
   getCurrentUser,
+  refreshToken,
 };
 

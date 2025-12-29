@@ -9,6 +9,20 @@ export const STRINGS = {
     LOGIN_SUCCESS: 'Login successful',
     LOGOUT_SUCCESS: 'Logged out successfully',
     USER_FETCHED: 'User details fetched successfully',
+    TOKEN_REFRESHED: 'Token refreshed successfully',
+  },
+  SETTINGS: {
+    OPENAI_KEY_SAVED: 'OpenAI API key saved successfully',
+    OPENAI_KEY_DELETED: 'OpenAI API key deleted successfully',
+    OPENAI_KEY_EXISTS: 'OpenAI API key exists',
+    OPENAI_KEY_NOT_SET: 'OpenAI API key is not set',
+  },
+  CHAT: {
+    SESSION_CREATED: 'Chat session created successfully',
+    MESSAGES_FETCHED: 'Messages fetched successfully',
+    CHATS_FETCHED: 'Chats fetched successfully',
+    CHAT_FETCHED: 'Chat fetched successfully',
+    STREAM_STOPPED: 'Stream stopped successfully',
   },
   HEALTH: {
     OK: 'OK',

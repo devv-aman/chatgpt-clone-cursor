@@ -12,6 +12,8 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  REDIS_URL: z.string().default('redis://localhost:6379'),
+  ENCRYPTION_KEY: z.string().min(32),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

@@ -5,9 +5,10 @@ import { STRINGS } from '../../constants/strings.js';
 import { HEADERS } from '../../constants/api.js';
 import { UnauthorizedError } from '../../utils/errors.js';
 import { ERROR_MESSAGES, ERROR_CODES } from '../../constants/errors.js';
-import type { RegisterInput, LoginInput, RegisterResponse } from './auth.schema.js';
+import type { RegisterInput, LoginInput, RefreshTokenInput, RegisterResponse } from './auth.schema.js';
 import type { ApiResponse } from '../../types/common.types.js';
 import type { AuthResponse, UserResponse } from './auth.schema.js';
+import type { AuthTokens } from './auth.service.js';
 
 const BEARER_PREFIX = 'Bearer ';
 
@@ -103,10 +104,29 @@ export const me = async (
   }
 };
 
+export const refresh = async (
+  req: Request<Record<string, string>, unknown, RefreshTokenInput>,
+  res: Response<ApiResponse<AuthTokens>>,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const result = await authService.refreshToken(req.body);
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: STRINGS.AUTH.TOKEN_REFRESHED,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const authController = {
   register,
   login,
   logout,
   me,
+  refresh,
 };
 

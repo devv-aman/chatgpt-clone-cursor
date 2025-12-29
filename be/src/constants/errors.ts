@@ -46,6 +46,21 @@ export const ERROR_MESSAGES = {
     CREATE_FAILED: 'Failed to create message',
     EMPTY_CONTENT: 'Message content cannot be empty',
   },
+  // Settings errors
+  SETTINGS: {
+    OPENAI_KEY_REQUIRED: 'Please set your OpenAI API key first',
+    OPENAI_KEY_INVALID: 'Invalid OpenAI API key format',
+    OPENAI_KEY_SAVE_FAILED: 'Failed to save OpenAI API key',
+    OPENAI_KEY_DECRYPT_FAILED: 'Failed to decrypt OpenAI API key',
+  },
+  // Stream errors
+  STREAM: {
+    NOT_FOUND: 'Stream not found',
+    ALREADY_STOPPED: 'Stream has already been stopped',
+    START_FAILED: 'Failed to start stream',
+    STOP_FAILED: 'Failed to stop stream',
+    OPENAI_ERROR: 'OpenAI API error occurred',
+  },
 } as const;
 
 export const ERROR_CODES = {
@@ -65,5 +80,12 @@ export const ERROR_CODES = {
   NOT_FOUND: 'RES_4001',
   FORBIDDEN: 'RES_4002',
   CONFLICT: 'RES_4003',
+  // Settings codes (6xxx)
+  OPENAI_KEY_REQUIRED: 'SET_6001',
+  OPENAI_KEY_INVALID: 'SET_6002',
+  // Stream codes (7xxx)
+  STREAM_NOT_FOUND: 'STR_7001',
+  STREAM_ALREADY_STOPPED: 'STR_7002',
+  STREAM_ERROR: 'STR_7003',
 } as const;
 

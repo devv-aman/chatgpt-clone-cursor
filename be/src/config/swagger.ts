@@ -1,5 +1,4 @@
 import swaggerJsdoc from 'swagger-jsdoc';
-import { API_CONFIG } from '../constants/api.js';
 import { STRINGS } from '../constants/strings.js';
 
 const SWAGGER_CONSTANTS = {
@@ -26,7 +25,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: `http://localhost:3000${API_CONFIG.PREFIX}`,
+        url: 'http://localhost:3000',
         description: 'Development server',
       },
     ],
@@ -365,6 +364,87 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
+        Chat: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid',
+              example: '123e4567-e89b-12d3-a456-426614174000',
+            },
+            user_id: {
+              type: 'string',
+              format: 'uuid',
+            },
+            title: {
+              type: 'string',
+              example: 'New Chat',
+            },
+            created_at: {
+              type: 'string',
+              format: 'date-time',
+            },
+            updated_at: {
+              type: 'string',
+              format: 'date-time',
+            },
+            deleted_at: {
+              type: 'string',
+              format: 'date-time',
+              nullable: true,
+            },
+          },
+        },
+        Message: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid',
+              example: '123e4567-e89b-12d3-a456-426614174000',
+            },
+            chat_id: {
+              type: 'string',
+              format: 'uuid',
+            },
+            role: {
+              type: 'string',
+              enum: ['user', 'assistant', 'system'],
+              example: 'user',
+            },
+            content: {
+              type: 'string',
+              example: 'Hello, how can I help you?',
+            },
+            model_id: {
+              type: 'string',
+              nullable: true,
+              example: 'gpt-5.2',
+            },
+            model_name: {
+              type: 'string',
+              nullable: true,
+              example: 'gpt-5.2',
+            },
+            tokens_used: {
+              type: 'integer',
+              nullable: true,
+            },
+            created_at: {
+              type: 'string',
+              format: 'date-time',
+            },
+            updated_at: {
+              type: 'string',
+              format: 'date-time',
+            },
+            deleted_at: {
+              type: 'string',
+              format: 'date-time',
+              nullable: true,
+            },
+          },
+        },
       },
     },
     tags: [
@@ -375,6 +455,18 @@ const options: swaggerJsdoc.Options = {
       {
         name: 'Authentication',
         description: 'User authentication endpoints',
+      },
+      {
+        name: 'Settings',
+        description: 'User settings management',
+      },
+      {
+        name: 'Chat',
+        description: 'Chat streaming endpoints',
+      },
+      {
+        name: 'Chats',
+        description: 'Chat history and session management',
       },
     ],
   },

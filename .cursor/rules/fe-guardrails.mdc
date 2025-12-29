@@ -1,0 +1,8 @@
+---
+alwaysApply: false
+---
+- Do not use any external libraries or frameworks unless absolutely necessary.
+- Never hardcode colors in the code. Always use the global/local css colors names.
+- Do not hardcode any text/strings in the code. Always use a common constants file for the strings if common and if local to the component, use a local constants file.
+- Always use either hex/rgba for colors
+- 
