@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Settings } from 'lucide-react';
+import { MessageSquarePlus, Settings } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -15,14 +15,15 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { ThemeToggle } from './ThemeToggle';
+import { ChatHistoryList } from './ChatHistoryList';
 import { ROUTES } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 
 const navigationItems = [
   {
-    title: STRINGS.NAVIGATION.HOME,
-    url: ROUTES.HOME,
-    icon: Home,
+    title: STRINGS.CHAT.NEW_CHAT,
+    url: ROUTES.CHAT,
+    icon: MessageSquarePlus,
   },
   {
     title: STRINGS.NAVIGATION.SETTINGS,
@@ -42,15 +43,17 @@ export function AppSidebar() {
     }
   }, [location.pathname, isMobile, setOpenMobile]);
 
+  const isChatRoute = location.pathname === '/' || location.pathname.startsWith('/chat');
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link to={ROUTES.HOME}>
+              <Link to={ROUTES.CHAT}>
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Home className="size-4" />
+                  <MessageSquarePlus className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">{STRINGS.APP_NAME}</span>
@@ -68,7 +71,11 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    isActive={location.pathname === item.url}
+                    isActive={
+                      item.url === ROUTES.CHAT
+                        ? isChatRoute
+                        : location.pathname === item.url
+                    }
                     tooltip={item.title}
                   >
                     <Link to={item.url}>
@@ -81,6 +88,9 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        
+        {/* Chat History */}
+        <ChatHistoryList />
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>

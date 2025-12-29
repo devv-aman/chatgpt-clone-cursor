@@ -1,7 +1,7 @@
 export const STRINGS = {
-  APP_NAME: 'React Boilerplate',
+  APP_NAME: 'AI Chat',
   NAVIGATION: {
-    HOME: 'Home',
+    CHAT: 'Chat',
     SETTINGS: 'Settings',
   },
   THEME: {
@@ -14,6 +14,12 @@ export const STRINGS = {
     TOGGLE_LABEL: 'Toggle sidebar',
     COLLAPSE_LABEL: 'Collapse sidebar',
     EXPAND_LABEL: 'Expand sidebar',
+    YOUR_CHATS: 'Your chats',
+    NO_CHATS: 'No chats yet',
+    LOADING_CHATS: 'Loading chats...',
+  },
+  CHAT: {
+    NEW_CHAT: 'New Chat',
   },
 } as const;
 

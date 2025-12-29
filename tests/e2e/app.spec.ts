@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 const ROUTES = {
-  HOME: '/',
+  CHAT: '/',
   SETTINGS: '/settings',
 };
 
 const STRINGS = {
-  APP_NAME: 'React Boilerplate',
+  APP_NAME: 'AI Chat',
   NAVIGATION: {
-    HOME: 'Home',
+    NEW_CHAT: 'New Chat',
     SETTINGS: 'Settings',
   },
   THEME: {
@@ -16,8 +16,10 @@ const STRINGS = {
   },
 };
 
-const HOME_STRINGS = {
-  TITLE: 'Hello World',
+const CHAT_STRINGS = {
+  PLACEHOLDER: 'Ask anything...',
+  SEND_LABEL: 'Send message',
+  STOP_LABEL: 'Stop generating',
 };
 
 const SETTINGS_STRINGS = {
@@ -30,23 +32,48 @@ const NOT_FOUND_STRINGS = {
   GO_HOME: 'Go Home',
 };
 
-test.describe('Home Page', () => {
-  test('displays Hello World title', async ({ page }) => {
-    await page.goto(ROUTES.HOME);
+test.describe('Chat Page', () => {
+  test('displays prompt input', async ({ page }) => {
+    await page.goto(ROUTES.CHAT);
     
-    await expect(page.getByRole('heading', { name: HOME_STRINGS.TITLE })).toBeVisible();
+    await expect(page.getByPlaceholder(CHAT_STRINGS.PLACEHOLDER)).toBeVisible();
   });
 
-  test('has correct page title structure', async ({ page }) => {
-    await page.goto(ROUTES.HOME);
+  test('displays send button', async ({ page }) => {
+    await page.goto(ROUTES.CHAT);
     
-    await expect(page.getByRole('heading', { level: 1 })).toContainText(HOME_STRINGS.TITLE);
+    await expect(page.getByRole('button', { name: CHAT_STRINGS.SEND_LABEL })).toBeVisible();
+  });
+
+  test('send button is disabled when input is empty', async ({ page }) => {
+    await page.goto(ROUTES.CHAT);
+    
+    await expect(page.getByRole('button', { name: CHAT_STRINGS.SEND_LABEL })).toBeDisabled();
+  });
+
+  test('send button is enabled when input has text', async ({ page }) => {
+    await page.goto(ROUTES.CHAT);
+    
+    await page.getByPlaceholder(CHAT_STRINGS.PLACEHOLDER).fill('Hello');
+    
+    await expect(page.getByRole('button', { name: CHAT_STRINGS.SEND_LABEL })).toBeEnabled();
+  });
+
+  test('allows shift+enter for new line', async ({ page }) => {
+    await page.goto(ROUTES.CHAT);
+    
+    const textarea = page.getByPlaceholder(CHAT_STRINGS.PLACEHOLDER);
+    await textarea.fill('Line 1');
+    await textarea.press('Shift+Enter');
+    await textarea.type('Line 2');
+    
+    await expect(textarea).toHaveValue('Line 1\nLine 2');
   });
 });
 
 test.describe('Navigation', () => {
-  test('navigates from home to settings', async ({ page, isMobile }) => {
-    await page.goto(ROUTES.HOME);
+  test('navigates from chat to settings', async ({ page, isMobile }) => {
+    await page.goto(ROUTES.CHAT);
     
     // On mobile, need to open sidebar first
     if (isMobile) {
@@ -67,7 +94,7 @@ test.describe('Navigation', () => {
     await expect(page.getByRole('heading', { name: SETTINGS_STRINGS.TITLE })).toBeVisible();
   });
 
-  test('navigates from settings to home', async ({ page, isMobile }) => {
+  test('navigates from settings to chat', async ({ page, isMobile }) => {
     await page.goto(ROUTES.SETTINGS);
     
     // On mobile, need to open sidebar first
@@ -76,24 +103,24 @@ test.describe('Navigation', () => {
       await expect(page.locator('[data-slot="sidebar"][data-mobile="true"]')).toBeVisible();
     }
     
-    await page.getByRole('link', { name: STRINGS.NAVIGATION.HOME }).click();
+    await page.getByRole('link', { name: STRINGS.NAVIGATION.NEW_CHAT }).click();
     
     // Wait for navigation and sidebar to auto-close on mobile
-    await expect(page).toHaveURL(ROUTES.HOME);
+    await expect(page).toHaveURL(ROUTES.CHAT);
     
     if (isMobile) {
       // Sidebar should auto-close after navigation
       await expect(page.locator('[data-slot="sidebar"][data-mobile="true"]')).not.toBeVisible();
     }
     
-    await expect(page.getByRole('heading', { name: HOME_STRINGS.TITLE })).toBeVisible();
+    await expect(page.getByPlaceholder(CHAT_STRINGS.PLACEHOLDER)).toBeVisible();
   });
 
   test('sidebar shows app name', async ({ page, isMobile }) => {
     // Skip on mobile as sidebar is hidden by default
     test.skip(isMobile, 'Sidebar is hidden on mobile');
     
-    await page.goto(ROUTES.HOME);
+    await page.goto(ROUTES.CHAT);
     
     await expect(page.getByText(STRINGS.APP_NAME)).toBeVisible();
   });
@@ -101,7 +128,7 @@ test.describe('Navigation', () => {
   test('sidebar auto-closes after navigation on mobile', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'Auto-close test is for mobile only');
     
-    await page.goto(ROUTES.HOME);
+    await page.goto(ROUTES.CHAT);
     
     // Open sidebar
     await page.locator('[data-sidebar="trigger"]').click();
@@ -117,7 +144,7 @@ test.describe('Navigation', () => {
 
 test.describe('Theme Toggle', () => {
   test('toggles between light and dark theme', async ({ page, isMobile }) => {
-    await page.goto(ROUTES.HOME);
+    await page.goto(ROUTES.CHAT);
     
     // On mobile, need to open sidebar first to access theme toggle
     if (isMobile) {
@@ -138,7 +165,7 @@ test.describe('Theme Toggle', () => {
   });
 
   test('persists theme preference across page reload', async ({ page, isMobile }) => {
-    await page.goto(ROUTES.HOME);
+    await page.goto(ROUTES.CHAT);
     
     // On mobile, need to open sidebar first
     if (isMobile) {
@@ -168,7 +195,7 @@ test.describe('Sidebar', () => {
     // Skip on mobile as sidebar behavior is different
     test.skip(isMobile, 'Sidebar collapse test is for desktop only');
     
-    await page.goto(ROUTES.HOME);
+    await page.goto(ROUTES.CHAT);
     
     // Find and click sidebar toggle
     const sidebarTrigger = page.locator('[data-sidebar="trigger"]');
@@ -188,7 +215,7 @@ test.describe('Responsive Design', () => {
   test('shows mobile menu on small screens', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'Mobile menu test is for mobile only');
     
-    await page.goto(ROUTES.HOME);
+    await page.goto(ROUTES.CHAT);
     
     // On mobile, sidebar should be hidden initially
     const sidebar = page.locator('[data-slot="sidebar"][data-mobile="true"]');
@@ -218,7 +245,7 @@ test.describe('404 Page', () => {
     await expect(page.getByText('P').first()).toBeVisible();
   });
 
-  test('has go home button that navigates to home', async ({ page }) => {
+  test('has go home button that navigates to chat', async ({ page }) => {
     await page.goto('/non-existent-page');
     
     const goHomeButton = page.getByRole('link', { name: NOT_FOUND_STRINGS.GO_HOME });
@@ -226,8 +253,8 @@ test.describe('404 Page', () => {
     
     await goHomeButton.click();
     
-    await expect(page).toHaveURL(ROUTES.HOME);
-    await expect(page.getByRole('heading', { name: HOME_STRINGS.TITLE })).toBeVisible();
+    await expect(page).toHaveURL(ROUTES.CHAT);
+    await expect(page.getByPlaceholder(CHAT_STRINGS.PLACEHOLDER)).toBeVisible();
   });
 
   test('has animated elements', async ({ page }) => {

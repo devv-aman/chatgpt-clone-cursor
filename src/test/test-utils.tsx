@@ -1,27 +1,50 @@
-import { type ReactElement, type ReactNode } from 'react';
-import { render, type RenderOptions } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider } from '@/providers/ThemeProvider';
+import { type ReactElement, type ReactNode } from "react";
+import { render, type RenderOptions } from "@testing-library/react";
+import { BrowserRouter } from "react-router-dom";
+import { ThemeProvider } from "@/providers/ThemeProvider";
+import { AuthContext, type AuthContextType } from "@/providers/AuthProvider";
 
 interface AllProvidersProps {
   children: ReactNode;
+  authValue?: Partial<AuthContextType>;
 }
 
-function AllProviders({ children }: AllProvidersProps) {
+const defaultAuthValue: AuthContextType = {
+  user: null,
+  isLoading: false,
+  isAuthenticated: false,
+  login: async () => {},
+  register: async () => ({ confirmationRequired: false }),
+  logout: async () => {},
+  checkAuth: async () => {},
+};
+
+function AllProviders({ children, authValue }: AllProvidersProps) {
+  const mergedAuthValue = { ...defaultAuthValue, ...authValue };
+
   return (
     <ThemeProvider defaultTheme="light">
-      <BrowserRouter>{children}</BrowserRouter>
+      <AuthContext.Provider value={mergedAuthValue}>
+        <BrowserRouter>{children}</BrowserRouter>
+      </AuthContext.Provider>
     </ThemeProvider>
   );
 }
 
-function customRender(
-  ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
-) {
-  return render(ui, { wrapper: AllProviders, ...options });
+interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
+  authValue?: Partial<AuthContextType>;
 }
 
-export * from '@testing-library/react';
-export { customRender as render };
+function customRender(ui: ReactElement, options?: CustomRenderOptions) {
+  const { authValue, ...renderOptions } = options || {};
+  return render(ui, {
+    wrapper: ({ children }) => (
+      <AllProviders authValue={authValue}>{children}</AllProviders>
+    ),
+    ...renderOptions,
+  });
+}
 
+export * from "@testing-library/react";
+export { customRender as render };
+export { defaultAuthValue };

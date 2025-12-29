@@ -8,11 +8,25 @@ export const API_CONFIG = {
   },
   CONTENT_TYPES: {
     JSON: 'application/json',
+    EVENT_STREAM: 'text/event-stream',
   },
 } as const;
 
 export const API_ENDPOINTS = {
-  // Add your API endpoints here
   HEALTH: '/health',
+  AUTH: {
+    LOGIN: '/api/v1/auth/login',
+    REGISTER: '/api/v1/auth/register',
+    REFRESH: '/api/v1/auth/refresh',
+    LOGOUT: '/api/v1/auth/logout',
+    ME: '/api/v1/auth/me',
+  },
+  CHAT: {
+    STREAM: '/api/v1/chat/stream',
+    STOP_STREAM: (streamId: string) => `/api/v1/chat/stream/${streamId}/stop`,
+    LIST: '/api/v1/chats',
+    DETAIL: (chatId: string) => `/api/v1/chats/${chatId}`,
+    MESSAGES: (chatId: string) => `/api/v1/chats/${chatId}/messages`,
+  },
 } as const;
 

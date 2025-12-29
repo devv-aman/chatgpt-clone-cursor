@@ -1,28 +1,52 @@
-import { createBrowserRouter } from 'react-router-dom';
-import { MainLayout } from '@/components/layout';
-import { Home } from '@/pages/Home';
-import { Settings } from '@/pages/Settings';
-import { NotFound } from '@/pages/NotFound';
-import { ROUTES } from '@/constants/routes';
+import { createBrowserRouter } from "react-router-dom";
+import { MainLayout, ProtectedRoute } from "@/components/layout";
+import { Chat } from "@/pages/Chat";
+import { Settings } from "@/pages/Settings";
+import { NotFound } from "@/pages/NotFound";
+import { Login, Register, AuthLayout } from "@/pages/Auth";
+import { ROUTES } from "@/constants/routes";
 
 export const router = createBrowserRouter([
+  // Auth routes (public, redirect to home if authenticated)
   {
-    path: ROUTES.HOME,
-    element: <MainLayout />,
+    element: <AuthLayout />,
     children: [
       {
-        index: true,
-        element: <Home />,
+        path: ROUTES.LOGIN,
+        element: <Login />,
       },
       {
-        path: ROUTES.SETTINGS,
-        element: <Settings />,
+        path: ROUTES.REGISTER,
+        element: <Register />,
+      },
+    ],
+  },
+  // Protected routes (require authentication)
+  {
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: ROUTES.CHAT,
+        element: <MainLayout />,
+        children: [
+          {
+            index: true,
+            element: <Chat />,
+          },
+          {
+            path: ROUTES.CHAT_WITH_ID,
+            element: <Chat />,
+          },
+          {
+            path: ROUTES.SETTINGS,
+            element: <Settings />,
+          },
+        ],
       },
     ],
   },
   {
-    path: '*',
+    path: "*",
     element: <NotFound />,
   },
 ]);
-

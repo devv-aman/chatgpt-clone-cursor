@@ -63,6 +63,7 @@
         - (Refresh Token) POST /api/v1/auth/refresh
         - (Logout) POST /api/v1/auth/logout
         - (Get User Details) GET /api/v1/auth/me
+    - The login should set HTTP-only cookies.
 
 </instructions>
 

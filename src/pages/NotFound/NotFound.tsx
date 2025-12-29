@@ -60,7 +60,7 @@ export function NotFound() {
         size="lg"
         className="animate-fade-in-up animation-delay-700"
       >
-        <Link to={ROUTES.HOME}>{NOT_FOUND_STRINGS.GO_HOME}</Link>
+        <Link to={ROUTES.CHAT}>{NOT_FOUND_STRINGS.GO_HOME}</Link>
       </Button>
 
       {/* Floating particles background */}
