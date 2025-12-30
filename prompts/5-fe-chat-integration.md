@@ -26,6 +26,7 @@
     - The chat history list should be sorted by updated at in descending order.
     - The chat history scroll should have lazy loading, so that we don't load all the chat history at once.
     - The chat history list should have a top sticky title "Your chats" at the top of the list.
+    - The chat stream should be maintained by a global map, so that we can manage multiple chat streams at once in different chat routes.
 </instructions>
 
 <testing>

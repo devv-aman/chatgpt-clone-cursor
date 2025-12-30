@@ -1,18 +1,14 @@
-import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
-import { apiClient } from './client';
+import { API_CONFIG, API_ENDPOINTS } from "@/constants/api";
+import { apiClient, tokenStorage } from "./client";
 import type {
   ChatListResponse,
   ChatResponse,
   MessagesResponse,
   StartStreamRequest,
   StreamEvent,
-} from '@/types/chat';
+} from "@/types/chat";
 
 type StreamCallback = (event: StreamEvent) => void;
-
-const getAuthToken = (): string | null => {
-  return localStorage.getItem('auth_token');
-};
 
 export const chatApi = {
   /**
@@ -26,16 +22,16 @@ export const chatApi = {
     onEvent: StreamCallback,
     signal?: AbortSignal
   ): Promise<void> {
-    const token = getAuthToken();
+    const token = tokenStorage.getAccessToken();
     if (!token) {
-      onEvent({ type: 'error', message: 'Not authenticated' });
+      onEvent({ type: "error", message: "Not authenticated" });
       return;
     }
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_ENDPOINTS.CHAT.STREAM}`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
           [API_CONFIG.HEADERS.CONTENT_TYPE]: API_CONFIG.CONTENT_TYPES.JSON,
           [API_CONFIG.HEADERS.AUTHORIZATION]: `Bearer ${token}`,
@@ -49,7 +45,7 @@ export const chatApi = {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       onEvent({
-        type: 'error',
+        type: "error",
         message: errorData?.error?.message || `HTTP error ${response.status}`,
       });
       return;
@@ -57,12 +53,12 @@ export const chatApi = {
 
     const reader = response.body?.getReader();
     if (!reader) {
-      onEvent({ type: 'error', message: 'No response body' });
+      onEvent({ type: "error", message: "No response body" });
       return;
     }
 
     const decoder = new TextDecoder();
-    let buffer = '';
+    let buffer = "";
 
     try {
       while (true) {
@@ -70,11 +66,11 @@ export const chatApi = {
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.startsWith("data: ")) {
             try {
               const eventData = JSON.parse(line.slice(6)) as StreamEvent;
               onEvent(eventData);
@@ -86,7 +82,7 @@ export const chatApi = {
       }
 
       // Process remaining buffer
-      if (buffer.startsWith('data: ')) {
+      if (buffer.startsWith("data: ")) {
         try {
           const eventData = JSON.parse(buffer.slice(6)) as StreamEvent;
           onEvent(eventData);
@@ -95,13 +91,13 @@ export const chatApi = {
         }
       }
     } catch (error) {
-      if ((error as Error).name === 'AbortError') {
+      if ((error as Error).name === "AbortError") {
         // Stream was aborted intentionally
         return;
       }
       onEvent({
-        type: 'error',
-        message: (error as Error).message || 'Stream error',
+        type: "error",
+        message: (error as Error).message || "Stream error",
       });
     }
   },
@@ -159,4 +155,3 @@ export const chatApi = {
     return response.data;
   },
 };
-

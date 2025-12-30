@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { MessageSquarePlus, Settings } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Plus, Search } from "lucide-react";
+import { OpenAI } from "@lobehub/icons";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -13,28 +13,19 @@ import {
   SidebarMenuItem,
   SidebarRail,
   useSidebar,
-} from '@/components/ui/sidebar';
-import { ThemeToggle } from './ThemeToggle';
-import { ChatHistoryList } from './ChatHistoryList';
-import { ROUTES } from '@/constants/routes';
-import { STRINGS } from '@/constants/strings';
-
-const navigationItems = [
-  {
-    title: STRINGS.CHAT.NEW_CHAT,
-    url: ROUTES.CHAT,
-    icon: MessageSquarePlus,
-  },
-  {
-    title: STRINGS.NAVIGATION.SETTINGS,
-    url: ROUTES.SETTINGS,
-    icon: Settings,
-  },
-];
+} from "@/components/ui/sidebar";
+import { ChatHistoryList } from "./ChatHistoryList";
+import { SearchModal } from "./SearchModal";
+import { useChatStore } from "@/stores";
+import { ROUTES } from "@/constants/routes";
+import { STRINGS } from "@/constants/strings";
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isMobile, setOpenMobile } = useSidebar();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const clearActiveChat = useChatStore((state) => state.clearActiveChat);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -43,64 +34,86 @@ export function AppSidebar() {
     }
   }, [location.pathname, isMobile, setOpenMobile]);
 
-  const isChatRoute = location.pathname === '/' || location.pathname.startsWith('/chat');
+  // Keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const handleNewChat = () => {
+    clearActiveChat();
+    navigate(ROUTES.CHAT);
+  };
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Link to={ROUTES.CHAT}>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <MessageSquarePlus className="size-4" />
-                </div>
-                <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">{STRINGS.APP_NAME}</span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+    <>
+      <Sidebar collapsible="icon">
+        <SidebarHeader className="border-b border-sidebar-border">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" asChild>
+                <Link to={ROUTES.CHAT}>
+                  <div className="flex aspect-square size-8 items-center justify-center">
+                    <OpenAI size={24} />
+                  </div>
+                  <div className="flex flex-col gap-0.5 leading-none">
+                    <span className="font-semibold">{STRINGS.APP_NAME}</span>
+                  </div>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {/* New Chat CTA */}
+                <SidebarMenuItem>
                   <SidebarMenuButton
-                    asChild
-                    isActive={
-                      item.url === ROUTES.CHAT
-                        ? isChatRoute
-                        : location.pathname === item.url
-                    }
-                    tooltip={item.title}
+                    onClick={handleNewChat}
+                    tooltip={STRINGS.CHAT.NEW_CHAT}
+                    className="font-medium"
                   >
-                    <Link to={item.url}>
-                      <item.icon className="size-4" />
-                      <span>{item.title}</span>
-                    </Link>
+                    <Plus className="size-4" />
+                    <span>{STRINGS.CHAT.NEW_CHAT}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
-        {/* Chat History */}
-        <ChatHistoryList />
-      </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <ThemeToggle />
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
+
+                {/* Search Chats CTA */}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => setIsSearchOpen(true)}
+                    tooltip={STRINGS.SIDEBAR.SEARCH_CHATS}
+                  >
+                    <Search className="size-4" />
+                    <span className="flex-1">
+                      {STRINGS.SIDEBAR.SEARCH_CHATS}
+                    </span>
+                    <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border border-sidebar-border bg-sidebar-accent px-1.5 font-mono text-[10px] font-medium text-muted-foreground group-data-[collapsible=icon]:hidden sm:flex">
+                      {STRINGS.SIDEBAR.SEARCH_SHORTCUT}
+                    </kbd>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* Chat History */}
+          <ChatHistoryList />
+        </SidebarContent>
+        <SidebarRail />
+      </Sidebar>
+
+      {/* Search Modal */}
+      <SearchModal open={isSearchOpen} onOpenChange={setIsSearchOpen} />
+    </>
   );
 }
-

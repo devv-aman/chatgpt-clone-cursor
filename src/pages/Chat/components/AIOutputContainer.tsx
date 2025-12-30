@@ -1,10 +1,10 @@
-import { useState, useCallback, useMemo } from 'react';
-import ReactMarkdown from 'react-markdown';
-import { Copy, Check, Brain, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { CodeBlock } from './CodeBlock';
-import { CHAT_STRINGS } from '../constants';
-import type { Components } from 'react-markdown';
+import { useState, useCallback, useMemo } from "react";
+import ReactMarkdown from "react-markdown";
+import { Copy, Check, Brain, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CodeBlock } from "./CodeBlock";
+import { CHAT_STRINGS } from "../constants";
+import type { Components } from "react-markdown";
 
 interface AIOutputContainerProps {
   content: string;
@@ -34,9 +34,9 @@ export function AIOutputContainer({
   const components: Components = useMemo(
     () => ({
       code({ className, children, ...props }) {
-        const match = /language-(\w+)/.exec(className || '');
+        const match = /language-(\w+)/.exec(className || "");
         const isInline = !match && !className;
-        
+
         if (isInline) {
           return (
             <code
@@ -50,7 +50,7 @@ export function AIOutputContainer({
 
         return (
           <CodeBlock language={match?.[1]}>
-            {String(children).replace(/\n$/, '')}
+            {String(children).replace(/\n$/, "")}
           </CodeBlock>
         );
       },
@@ -118,9 +118,7 @@ export function AIOutputContainer({
         );
       },
       td({ children }) {
-        return (
-          <td className="border border-border px-4 py-2">{children}</td>
-        );
+        return <td className="border border-border px-4 py-2">{children}</td>;
       },
     }),
     []
@@ -158,21 +156,17 @@ export function AIOutputContainer({
           )}
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={handleCopy}
-            className="h-7 gap-1.5 text-xs opacity-0 transition-opacity group-hover:opacity-100"
-            aria-label={copied ? CHAT_STRINGS.COPIED_LABEL : CHAT_STRINGS.COPY_LABEL}
+            className="size-7 text-muted-foreground hover:text-foreground"
+            aria-label={
+              copied ? CHAT_STRINGS.COPIED_LABEL : CHAT_STRINGS.COPY_LABEL
+            }
           >
             {copied ? (
-              <>
-                <Check className="size-3" />
-                {CHAT_STRINGS.COPIED_LABEL}
-              </>
+              <Check className="size-3.5" />
             ) : (
-              <>
-                <Copy className="size-3" />
-                {CHAT_STRINGS.COPY_LABEL}
-              </>
+              <Copy className="size-3.5" />
             )}
           </Button>
         </div>
@@ -180,4 +174,3 @@ export function AIOutputContainer({
     </div>
   );
 }
-

@@ -1,12 +1,12 @@
-import OpenAI from 'openai';
-import { getSupabaseAdminClient } from '../../db/client.js';
-import { settingsService } from '../settings/index.js';
-import { streamService, STREAM_CONSTANTS } from '../stream/index.js';
-import { NotFoundError, InternalServerError } from '../../utils/errors.js';
-import { ERROR_MESSAGES } from '../../constants/errors.js';
-import { MESSAGE_ROLES } from '../../constants/strings.js';
-import { logger } from '../../utils/logger.js';
-import { CHAT_CONSTANTS } from './chat.constants.js';
+import OpenAI from "openai";
+import { getSupabaseAdminClient } from "../../db/client.js";
+import { settingsService } from "../settings/index.js";
+import { streamService, STREAM_CONSTANTS } from "../stream/index.js";
+import { NotFoundError, InternalServerError } from "../../utils/errors.js";
+import { ERROR_MESSAGES } from "../../constants/errors.js";
+import { MESSAGE_ROLES } from "../../constants/strings.js";
+import { logger } from "../../utils/logger.js";
+import { CHAT_CONSTANTS } from "./chat.constants.js";
 import type {
   StreamChatInput,
   MessagesResponse,
@@ -14,8 +14,8 @@ import type {
   SSEEvent,
   Usage,
   MessageWithUsage,
-} from './chat.schema.js';
-import type { Message, Chat, MessageInsert } from '../../db/types.js';
+} from "./chat.schema.js";
+import type { Message, Chat, MessageInsert } from "../../db/types.js";
 
 interface StreamContext {
   chatId: string;
@@ -36,7 +36,7 @@ export const createChatSession = async (
   const adminClient = getSupabaseAdminClient();
 
   const { data, error } = await adminClient
-    .from('chats')
+    .from("chats")
     .insert({
       user_id: userId,
       title: title || CHAT_CONSTANTS.DEFAULT_TITLE,
@@ -45,7 +45,7 @@ export const createChatSession = async (
     .single();
 
   if (error || !data) {
-    logger.error({ error, userId }, 'Failed to create chat session');
+    logger.error({ error, userId }, "Failed to create chat session");
     throw new InternalServerError(ERROR_MESSAGES.CHAT.CREATE_FAILED);
   }
 
@@ -59,11 +59,11 @@ export const getChatSession = async (
   const adminClient = getSupabaseAdminClient();
 
   const { data, error } = await adminClient
-    .from('chats')
-    .select('*')
-    .eq('id', chatId)
-    .eq('user_id', userId)
-    .is('deleted_at', null)
+    .from("chats")
+    .select("*")
+    .eq("id", chatId)
+    .eq("user_id", userId)
+    .is("deleted_at", null)
     .single();
 
   if (error || !data) {
@@ -85,7 +85,7 @@ export const saveMessage = async (
 
   const messageData: MessageInsert = {
     chat_id: chatId,
-    role: role as Message['role'],
+    role: role as Message["role"],
     content,
     model_id: modelId ?? null,
     model_name: modelName ?? null,
@@ -95,13 +95,13 @@ export const saveMessage = async (
   };
 
   const { data, error } = await adminClient
-    .from('messages')
+    .from("messages")
     .insert(messageData)
     .select()
     .single();
 
   if (error || !data) {
-    logger.error({ error, chatId }, 'Failed to save message');
+    logger.error({ error, chatId }, "Failed to save message");
     throw new InternalServerError(ERROR_MESSAGES.MESSAGE.CREATE_FAILED);
   }
 
@@ -111,17 +111,21 @@ export const saveMessage = async (
 // Transform a database message to include usage object
 const transformMessageWithUsage = (message: Message): MessageWithUsage => {
   const { prompt_tokens, completion_tokens, tokens_used, ...rest } = message;
-  
+
   // Only include usage if we have token data
-  const hasUsage = prompt_tokens !== null || completion_tokens !== null || tokens_used !== null;
-  
+  const hasUsage =
+    prompt_tokens !== null ||
+    completion_tokens !== null ||
+    tokens_used !== null;
+
   return {
     ...rest,
     usage: hasUsage
       ? {
           prompt_tokens: prompt_tokens ?? 0,
           completion_tokens: completion_tokens ?? 0,
-          total_tokens: tokens_used ?? (prompt_tokens ?? 0) + (completion_tokens ?? 0),
+          total_tokens:
+            tokens_used ?? (prompt_tokens ?? 0) + (completion_tokens ?? 0),
         }
       : null,
   };
@@ -140,27 +144,27 @@ export const getMessagesForChat = async (
 
   // Get total count
   const { count, error: countError } = await adminClient
-    .from('messages')
-    .select('*', { count: 'exact', head: true })
-    .eq('chat_id', chatId)
-    .is('deleted_at', null);
+    .from("messages")
+    .select("*", { count: "exact", head: true })
+    .eq("chat_id", chatId)
+    .is("deleted_at", null);
 
   if (countError) {
-    logger.error({ error: countError, chatId }, 'Failed to count messages');
+    logger.error({ error: countError, chatId }, "Failed to count messages");
     throw new InternalServerError(ERROR_MESSAGES.SERVER.DATABASE_ERROR);
   }
 
   // Get messages
   const { data, error } = await adminClient
-    .from('messages')
-    .select('*')
-    .eq('chat_id', chatId)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: true })
+    .from("messages")
+    .select("*")
+    .eq("chat_id", chatId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: true })
     .range(offset, offset + limit - 1);
 
   if (error) {
-    logger.error({ error, chatId }, 'Failed to fetch messages');
+    logger.error({ error, chatId }, "Failed to fetch messages");
     throw new InternalServerError(ERROR_MESSAGES.SERVER.DATABASE_ERROR);
   }
 
@@ -182,42 +186,42 @@ export const getUserChats = async (
 
   // Get total count
   const { count, error: countError } = await adminClient
-    .from('chats')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .is('deleted_at', null);
+    .from("chats")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .is("deleted_at", null);
 
   if (countError) {
-    logger.error({ error: countError, userId }, 'Failed to count chats');
+    logger.error({ error: countError, userId }, "Failed to count chats");
     throw new InternalServerError(ERROR_MESSAGES.SERVER.DATABASE_ERROR);
   }
 
   // Get chats
   const { data, error } = await adminClient
-    .from('chats')
-    .select('*')
-    .eq('user_id', userId)
-    .is('deleted_at', null)
-    .order('updated_at', { ascending: false })
+    .from("chats")
+    .select("*")
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (error) {
-    logger.error({ error, userId }, 'Failed to fetch chats');
+    logger.error({ error, userId }, "Failed to fetch chats");
     throw new InternalServerError(ERROR_MESSAGES.SERVER.DATABASE_ERROR);
   }
 
   // Get total tokens for each chat
   const chatIds = (data || []).map((chat) => chat.id);
-  
+
   let tokensByChat: Record<string, number> = {};
-  
+
   if (chatIds.length > 0) {
     // Aggregate tokens_used for each chat
     const { data: tokenData, error: tokenError } = await adminClient
-      .from('messages')
-      .select('chat_id, tokens_used')
-      .in('chat_id', chatIds)
-      .is('deleted_at', null);
+      .from("messages")
+      .select("chat_id, tokens_used")
+      .in("chat_id", chatIds)
+      .is("deleted_at", null);
 
     if (!tokenError && tokenData) {
       tokensByChat = tokenData.reduce((acc, msg) => {
@@ -254,7 +258,7 @@ export const streamChat = async (
   // Create or get chat session
   let chatId = input.chatId;
   if (!chatId) {
-    const chat = await createChatSession(userId);
+    const chat = await createChatSession(userId, input.title);
     chatId = chat.id;
   } else {
     // Verify ownership
@@ -262,7 +266,10 @@ export const streamChat = async (
   }
 
   // Create stream tracking
-  const { streamId, abortController } = await streamService.createStream(chatId, userId);
+  const { streamId, abortController } = await streamService.createStream(
+    chatId,
+    userId
+  );
 
   // Send session event first
   sendEvent({
@@ -275,13 +282,19 @@ export const streamChat = async (
   await saveMessage(chatId, MESSAGE_ROLES.USER, input.message);
 
   // Start background streaming process
-  streamInBackground({
-    chatId,
-    streamId,
-    userId,
-    model: input.model || CHAT_CONSTANTS.DEFAULT_MODEL,
-    abortController,
-  }, openai, input.message, sendEvent, onComplete);
+  streamInBackground(
+    {
+      chatId,
+      streamId,
+      userId,
+      model: input.model || CHAT_CONSTANTS.DEFAULT_MODEL,
+      abortController,
+    },
+    openai,
+    input.message,
+    sendEvent,
+    onComplete
+  );
 };
 
 const streamInBackground = async (
@@ -292,22 +305,24 @@ const streamInBackground = async (
   onComplete: () => void
 ): Promise<void> => {
   const { chatId, streamId, model, abortController } = context;
-  let accumulatedContent = '';
+  let accumulatedContent = "";
   let tokenUsage: Usage | null = null;
 
   try {
     // Fetch previous messages for context
     const adminClient = getSupabaseAdminClient();
     const { data: previousMessages } = await adminClient
-      .from('messages')
-      .select('role, content')
-      .eq('chat_id', chatId)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: true })
+      .from("messages")
+      .select("role, content")
+      .eq("chat_id", chatId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: true })
       .limit(20);
 
-    const messages: OpenAI.ChatCompletionMessageParam[] = (previousMessages || []).map((msg) => ({
-      role: msg.role as 'user' | 'assistant' | 'system',
+    const messages: OpenAI.ChatCompletionMessageParam[] = (
+      previousMessages || []
+    ).map((msg) => ({
+      role: msg.role as "user" | "assistant" | "system",
       content: msg.content,
     }));
 
@@ -327,7 +342,7 @@ const streamInBackground = async (
     for await (const chunk of stream) {
       // Check if stream was aborted
       if (abortController.signal.aborted) {
-        logger.info({ streamId }, 'Stream aborted by user');
+        logger.info({ streamId }, "Stream aborted by user");
         break;
       }
 
@@ -338,7 +353,7 @@ const streamInBackground = async (
           completion_tokens: chunk.usage.completion_tokens,
           total_tokens: chunk.usage.total_tokens,
         };
-        logger.info({ streamId, usage: tokenUsage }, 'Token usage captured');
+        logger.info({ streamId, usage: tokenUsage }, "Token usage captured");
       }
 
       const delta = chunk.choices[0]?.delta?.content;
@@ -363,7 +378,10 @@ const streamInBackground = async (
       );
 
       // Update stream status
-      await streamService.updateStreamStatus(streamId, STREAM_CONSTANTS.STATUS.COMPLETED);
+      await streamService.updateStreamStatus(
+        streamId,
+        STREAM_CONSTANTS.STATUS.COMPLETED
+      );
 
       const doneEvent: SSEEvent = {
         type: CHAT_CONSTANTS.SSE.EVENT_TYPES.DONE,
@@ -374,9 +392,9 @@ const streamInBackground = async (
     }
   } catch (error) {
     // Handle abort error gracefully
-    if (error instanceof Error && error.name === 'AbortError') {
-      logger.info({ streamId }, 'Stream aborted');
-      
+    if (error instanceof Error && error.name === "AbortError") {
+      logger.info({ streamId }, "Stream aborted");
+
       // Still save partial content if any
       if (accumulatedContent) {
         await saveMessage(
@@ -388,12 +406,18 @@ const streamInBackground = async (
           tokenUsage
         );
       }
-      
-      await streamService.updateStreamStatus(streamId, STREAM_CONSTANTS.STATUS.STOPPED);
+
+      await streamService.updateStreamStatus(
+        streamId,
+        STREAM_CONSTANTS.STATUS.STOPPED
+      );
     } else {
-      logger.error({ error, streamId, chatId }, 'OpenAI streaming error');
-      await streamService.updateStreamStatus(streamId, STREAM_CONSTANTS.STATUS.ERROR);
-      
+      logger.error({ error, streamId, chatId }, "OpenAI streaming error");
+      await streamService.updateStreamStatus(
+        streamId,
+        STREAM_CONSTANTS.STATUS.ERROR
+      );
+
       sendEvent({
         type: CHAT_CONSTANTS.SSE.EVENT_TYPES.ERROR,
         message: ERROR_MESSAGES.STREAM.OPENAI_ERROR,
@@ -404,7 +428,7 @@ const streamInBackground = async (
     setTimeout(() => {
       streamService.cleanupStream(streamId);
     }, 5000);
-    
+
     onComplete();
   }
 };
@@ -425,4 +449,3 @@ export const chatService = {
   streamChat,
   stopChatStream,
 };
-

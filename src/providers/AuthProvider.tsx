@@ -47,7 +47,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     try {
       const response = await authApi.me();
-      setUser(response.data.user);
+      setUser(response.data);
     } catch {
       // Token is invalid, clear it
       tokenStorage.clearTokens();

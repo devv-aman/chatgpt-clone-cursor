@@ -1,4 +1,4 @@
-<!-- This prompt is used to integrate the chat stream and history API into the frontend. -->
+<!-- This prompt is used to create Login and Register Page in the project. -->
 
 <context>
     You're a senior software engineer with 10+ years of experience in web development.

@@ -1,13 +1,14 @@
-import { z } from 'zod';
-import { ERROR_MESSAGES } from '../../constants/errors.js';
-import { CHAT_CONSTANTS } from './chat.constants.js';
-import type { Message, Chat } from '../../db/types.js';
+import { z } from "zod";
+import { ERROR_MESSAGES } from "../../constants/errors.js";
+import { CHAT_CONSTANTS } from "./chat.constants.js";
+import type { Message, Chat } from "../../db/types.js";
 
 // Stream request schema
 export const streamChatSchema = z.object({
   message: z.string().min(1, ERROR_MESSAGES.MESSAGE.EMPTY_CONTENT),
   model: z.string().optional().default(CHAT_CONSTANTS.DEFAULT_MODEL),
   chatId: z.string().uuid().optional(),
+  title: z.string().max(100).optional(),
 });
 
 export type StreamChatInput = z.infer<typeof streamChatSchema>;
@@ -57,30 +58,31 @@ export interface Usage {
 }
 
 // Message with usage object for API responses
-export interface MessageWithUsage extends Omit<Message, 'prompt_tokens' | 'completion_tokens' | 'tokens_used'> {
+export interface MessageWithUsage
+  extends Omit<Message, "prompt_tokens" | "completion_tokens" | "tokens_used"> {
   usage: Usage | null;
 }
 
 // Response types
 export interface SessionEvent {
-  type: 'session';
+  type: "session";
   chatId: string;
   streamId: string;
 }
 
 export interface ContentEvent {
-  type: 'content';
+  type: "content";
   delta: string;
 }
 
 export interface DoneEvent {
-  type: 'done';
+  type: "done";
   messageId: string;
   usage?: Usage;
 }
 
 export interface ErrorEvent {
-  type: 'error';
+  type: "error";
   message: string;
 }
 
@@ -100,4 +102,3 @@ export interface ChatsResponse {
   chats: ChatResponse[];
   total: number;
 }
-

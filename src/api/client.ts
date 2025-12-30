@@ -109,11 +109,11 @@ apiClient.interceptors.response.use(
 
     // Handle 401 errors - attempt token refresh
     // Exclude auth endpoints that should not trigger refresh
+    // Note: /me endpoint SHOULD trigger refresh, only exclude login/register/refresh
     const isAuthEndpoint =
       originalRequest.url === API_ENDPOINTS.AUTH.REFRESH ||
       originalRequest.url === API_ENDPOINTS.AUTH.LOGIN ||
-      originalRequest.url === API_ENDPOINTS.AUTH.REGISTER ||
-      originalRequest.url === API_ENDPOINTS.AUTH.ME;
+      originalRequest.url === API_ENDPOINTS.AUTH.REGISTER;
 
     if (
       error.response?.status === 401 &&

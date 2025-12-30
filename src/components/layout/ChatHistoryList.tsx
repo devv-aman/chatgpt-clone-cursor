@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { format } from 'date-fns';
-import { MessageSquare, Loader2 } from 'lucide-react';
-import { chatApi } from '@/api';
-import { getRoutePath } from '@/constants/routes';
-import { STRINGS } from '@/constants/strings';
+import { useEffect, useRef } from "react";
+import { Link, useParams } from "react-router-dom";
+import { format } from "date-fns";
+import { MessageSquare, Loader2 } from "lucide-react";
+import { useChatStore } from "@/stores";
+import { getRoutePath } from "@/constants/routes";
+import { STRINGS } from "@/constants/strings";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -12,63 +12,31 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-} from '@/components/ui/sidebar';
-import type { Chat } from '@/types/chat';
-
-const CHATS_PER_PAGE = 20;
+} from "@/components/ui/sidebar";
 
 export function ChatHistoryList() {
   const { chatId: activeChatId } = useParams<{ chatId: string }>();
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [error, setError] = useState(false);
-  const offsetRef = useRef(0);
-  const isLoadingRef = useRef(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  const loadChats = useCallback(async (append = false) => {
-    // Use ref to prevent race conditions
-    if (isLoadingRef.current) return;
-    
-    isLoadingRef.current = true;
-    setIsLoading(true);
-    
-    const currentOffset = append ? offsetRef.current : 0;
-    
-    try {
-      const response = await chatApi.getChats(CHATS_PER_PAGE, currentOffset);
-      if (response.success) {
-        const newChats = response.data.chats;
-        setChats((prev) => (append ? [...prev, ...newChats] : newChats));
-        setHasMore(currentOffset + newChats.length < response.data.total);
-        offsetRef.current = currentOffset + newChats.length;
-        setError(false);
-      }
-    } catch {
-      // Silently fail - user might not be authenticated
-      // Stop retrying on error to prevent infinite loops
-      setHasMore(false);
-      setError(true);
-    } finally {
-      isLoadingRef.current = false;
-      setIsLoading(false);
-    }
-  }, []);
+  // Zustand store selectors
+  const chatList = useChatStore((state) => state.chatList);
+  const chatListTotal = useChatStore((state) => state.chatListTotal);
+  const chatListLoading = useChatStore((state) => state.chatListLoading);
+  const loadChatList = useChatStore((state) => state.loadChatList);
 
-  // Initial load - only once
+  const hasMore = chatList.length < chatListTotal;
+
+  // Initial load
   useEffect(() => {
-    loadChats(false);
-  }, [loadChats]);
+    loadChatList(false);
+  }, [loadChatList]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
-    if (error) return; // Don't set up observer if there was an error
-    
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoadingRef.current) {
-          loadChats(true);
+        if (entries[0].isIntersecting && hasMore && !chatListLoading) {
+          loadChatList(true);
         }
       },
       { threshold: 0.1 }
@@ -84,11 +52,11 @@ export function ChatHistoryList() {
         observer.unobserve(target);
       }
     };
-  }, [hasMore, error, loadChats]);
+  }, [hasMore, chatListLoading, loadChatList]);
 
   const formatChatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return format(date, 'MMM d, yyyy, h:mm a');
+    return format(date, "MMM d, yyyy, h:mm a");
   };
 
   return (
@@ -98,13 +66,13 @@ export function ChatHistoryList() {
       </SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {chats.length === 0 && !isLoading && (
+          {chatList.length === 0 && !chatListLoading && (
             <div className="px-2 py-4 text-center text-sm text-muted-foreground">
               {STRINGS.SIDEBAR.NO_CHATS}
             </div>
           )}
-          
-          {chats.map((chat) => (
+
+          {chatList.map((chat) => (
             <SidebarMenuItem key={chat.id}>
               <SidebarMenuButton
                 asChild
@@ -114,7 +82,20 @@ export function ChatHistoryList() {
                 <Link to={getRoutePath.chat(chat.id)}>
                   <MessageSquare className="size-4" />
                   <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
-                    <span className="truncate font-medium">{chat.title}</span>
+                    <span className="truncate font-medium">
+                      {chat.isStreaming ? (
+                        <span className="flex items-center gap-1.5">
+                          <span className="truncate">{chat.title}</span>
+                          <span className="typing-indicator flex gap-0.5">
+                            <span className="dot size-1 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
+                            <span className="dot size-1 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]" />
+                            <span className="dot size-1 animate-bounce rounded-full bg-muted-foreground" />
+                          </span>
+                        </span>
+                      ) : (
+                        chat.title
+                      )}
+                    </span>
                     <span className="truncate text-xs text-muted-foreground">
                       {formatChatDate(chat.updated_at)}
                     </span>
@@ -126,7 +107,7 @@ export function ChatHistoryList() {
 
           {/* Loading indicator / Observer target */}
           <div ref={observerTarget} className="flex justify-center py-2">
-            {isLoading && (
+            {chatListLoading && (
               <Loader2 className="size-4 animate-spin text-muted-foreground" />
             )}
           </div>
@@ -135,4 +116,3 @@ export function ChatHistoryList() {
     </SidebarGroup>
   );
 }
-

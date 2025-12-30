@@ -7,14 +7,25 @@ export interface Chat {
   deleted_at: string | null;
 }
 
+export interface ChatWithStatus extends Chat {
+  isStreaming?: boolean;
+}
+
+export interface TokenUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+}
+
 export interface Message {
   id: string;
   chat_id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   model_id: string | null;
   model_name: string | null;
   tokens_used: number | null;
+  usage?: TokenUsage | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -45,23 +56,24 @@ export interface MessagesResponse {
 }
 
 export interface StreamSessionEvent {
-  type: 'session';
+  type: "session";
   chatId: string;
   streamId: string;
 }
 
 export interface StreamContentEvent {
-  type: 'content';
+  type: "content";
   delta: string;
 }
 
 export interface StreamDoneEvent {
-  type: 'done';
+  type: "done";
   messageId: string;
+  usage?: TokenUsage;
 }
 
 export interface StreamErrorEvent {
-  type: 'error';
+  type: "error";
   message: string;
 }
 
@@ -75,9 +87,10 @@ export interface StartStreamRequest {
   message: string;
   model?: string;
   chatId?: string;
+  title?: string;
 }
 
-export type ChatStatus = 'idle' | 'streaming' | 'stopped' | 'error';
+export type ChatStatus = "idle" | "streaming" | "stopped" | "error";
 
 export interface ChatState {
   chatId: string | null;
@@ -88,4 +101,3 @@ export interface ChatState {
   error: string | null;
   tokensUsed: number | null;
 }
-

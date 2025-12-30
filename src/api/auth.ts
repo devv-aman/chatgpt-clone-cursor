@@ -1,5 +1,5 @@
-import { apiClient } from './client';
-import { API_ENDPOINTS } from '@/constants/api';
+import { apiClient } from "./client";
+import { API_ENDPOINTS } from "@/constants/api";
 
 export interface User {
   id: string;
@@ -34,9 +34,7 @@ export interface AuthResponse {
 
 export interface MeResponse {
   success: boolean;
-  data: {
-    user: User;
-  };
+  data: User;
 }
 
 export interface RefreshResponse {
@@ -81,4 +79,3 @@ export const authApi = {
     return response.data;
   },
 };
-
