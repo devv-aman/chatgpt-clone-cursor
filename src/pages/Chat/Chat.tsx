@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { useChatStore } from "@/stores";
 import { useAuth } from "@/providers/AuthProvider";
 import { useModel } from "@/providers/ModelProvider";
@@ -9,6 +10,7 @@ import {
   AIOutputContainer,
 } from "./components";
 import { STRINGS } from "@/constants/strings";
+import { CHAT_CONFIG } from "./constants";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -28,6 +30,8 @@ export function Chat() {
   const { model } = useModel();
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isAutoScrollEnabled = useRef(true);
 
   // Zustand store selectors
   const activeChatId = useChatStore((state) => state.activeChatId);
@@ -66,13 +70,34 @@ export function Chat() {
     }
   }, [urlChatId, setActiveChat, loadChatMessages]);
 
-  // Scroll to bottom when messages change
+  // Handle scroll events to detect user scroll and enable/disable auto-scroll
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isAtBottom =
+        scrollTop + clientHeight >=
+        scrollHeight - CHAT_CONFIG.AUTO_SCROLL_THRESHOLD;
+      isAutoScrollEnabled.current = isAtBottom;
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Scroll to bottom when messages change, but only if auto-scroll is enabled
+  useEffect(() => {
+    if (isAutoScrollEnabled.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages, currentResponse]);
 
   const handleSubmit = useCallback(() => {
     if (inputValue.trim()) {
+      // Re-enable auto-scroll when user sends a new message
+      isAutoScrollEnabled.current = true;
       sendMessageAction(inputValue, model, navigate);
       setInputValue("");
     }
@@ -86,10 +111,16 @@ export function Chat() {
   }, [activeChatId, urlChatId, stopStreamAction]);
 
   const hasMessages = messages.length > 0 || currentResponse;
+  const isLoading = status === "loading";
 
   return (
     <div className="flex h-full flex-col">
-      {!hasMessages ? (
+      {isLoading ? (
+        // Loading state - show centered spinner
+        <div className="flex flex-1 items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : !hasMessages ? (
         // Centered prompt for new chat
         <div className="flex flex-1 flex-col items-center justify-center px-4">
           {/* Greeting Title */}
@@ -109,7 +140,10 @@ export function Chat() {
         // Chat view with messages
         <>
           {/* Messages container */}
-          <div className="chat-scroll min-h-0 flex-1 overflow-y-auto px-4 py-6">
+          <div
+            ref={scrollContainerRef}
+            className="chat-scroll min-h-0 flex-1 overflow-y-auto px-4 py-6"
+          >
             <div className="mx-auto max-w-3xl space-y-6">
               {messages.map((message) => (
                 <MessageBubble key={message.id} message={message} />

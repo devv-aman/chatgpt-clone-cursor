@@ -90,7 +90,7 @@ export interface StartStreamRequest {
   title?: string;
 }
 
-export type ChatStatus = "idle" | "streaming" | "stopped" | "error";
+export type ChatStatus = "idle" | "loading" | "streaming" | "stopped" | "error";
 
 export interface ChatState {
   chatId: string | null;

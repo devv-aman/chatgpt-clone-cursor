@@ -11,6 +11,7 @@ import type {
   StreamChatInput,
   MessagesResponse,
   ChatsResponse,
+  SearchResponse,
   SSEEvent,
   Usage,
   MessageWithUsage,
@@ -245,6 +246,82 @@ export const getUserChats = async (
   };
 };
 
+export const searchChats = async (
+  userId: string,
+  query: string,
+  limit: number = CHAT_CONSTANTS.PAGINATION.DEFAULT_LIMIT,
+  offset: number = 0
+): Promise<SearchResponse> => {
+  const adminClient = getSupabaseAdminClient();
+
+  // Search pattern for case-insensitive matching
+  const searchPattern = `%${query}%`;
+
+  // Get total count of matching chats
+  const { count, error: countError } = await adminClient
+    .from("chats")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .ilike("title", searchPattern);
+
+  if (countError) {
+    logger.error(
+      { error: countError, userId, query },
+      "Failed to count search results"
+    );
+    throw new InternalServerError(ERROR_MESSAGES.SERVER.DATABASE_ERROR);
+  }
+
+  // Get matching chats
+  const { data, error } = await adminClient
+    .from("chats")
+    .select("*")
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .ilike("title", searchPattern)
+    .order("updated_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    logger.error({ error, userId, query }, "Failed to search chats");
+    throw new InternalServerError(ERROR_MESSAGES.SERVER.DATABASE_ERROR);
+  }
+
+  // Get total tokens for each chat
+  const chatIds = (data || []).map((chat) => chat.id);
+
+  let tokensByChat: Record<string, number> = {};
+
+  if (chatIds.length > 0) {
+    const { data: tokenData, error: tokenError } = await adminClient
+      .from("messages")
+      .select("chat_id, tokens_used")
+      .in("chat_id", chatIds)
+      .is("deleted_at", null);
+
+    if (!tokenError && tokenData) {
+      tokensByChat = tokenData.reduce((acc, msg) => {
+        if (msg.tokens_used) {
+          acc[msg.chat_id] = (acc[msg.chat_id] || 0) + msg.tokens_used;
+        }
+        return acc;
+      }, {} as Record<string, number>);
+    }
+  }
+
+  // Attach total_tokens to each chat
+  const chatsWithTokens = (data || []).map((chat) => ({
+    ...chat,
+    total_tokens: tokensByChat[chat.id] || 0,
+  }));
+
+  return {
+    chats: chatsWithTokens,
+    total: count || 0,
+  };
+};
+
 export const streamChat = async (
   userId: string,
   input: StreamChatInput,
@@ -446,6 +523,7 @@ export const chatService = {
   saveMessage,
   getMessagesForChat,
   getUserChats,
+  searchChats,
   streamChat,
   stopChatStream,
 };

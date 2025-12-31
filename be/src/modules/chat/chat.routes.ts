@@ -1,15 +1,16 @@
-import { Router, type Router as RouterType } from 'express';
-import { chatController } from './chat.controller.js';
-import { validate } from '../../middleware/validate.middleware.js';
-import { authMiddleware } from '../../middleware/auth.middleware.js';
+import { Router, type Router as RouterType } from "express";
+import { chatController } from "./chat.controller.js";
+import { validate } from "../../middleware/validate.middleware.js";
+import { authMiddleware } from "../../middleware/auth.middleware.js";
 import {
   streamChatSchema,
   chatParamsSchema,
   streamParamsSchema,
   messagesQuerySchema,
   chatsQuerySchema,
-} from './chat.schema.js';
-import { API_ROUTES } from '../../constants/api.js';
+  searchQuerySchema,
+} from "./chat.schema.js";
+import { API_ROUTES } from "../../constants/api.js";
 
 const router = Router();
 
@@ -150,10 +151,70 @@ const chatsRouterInstance = Router();
  *         description: Unauthorized
  */
 chatsRouterInstance.get(
-  '/',
+  "/",
   authMiddleware,
   validate({ query: chatsQuerySchema }),
   chatController.getChats
+);
+
+/**
+ * @swagger
+ * /api/v1/chats/search:
+ *   get:
+ *     summary: Search user's chats
+ *     description: Search chat sessions by title
+ *     tags: [Chats]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Search query
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *           maximum: 100
+ *         description: Number of results to return
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Number of results to skip
+ *     responses:
+ *       200:
+ *         description: Search results fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     chats:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Chat'
+ *                     total:
+ *                       type: integer
+ *       401:
+ *         description: Unauthorized
+ */
+chatsRouterInstance.get(
+  API_ROUTES.CHATS.SEARCH,
+  authMiddleware,
+  validate({ query: searchQuerySchema }),
+  chatController.searchChats
 );
 
 /**
@@ -193,7 +254,7 @@ chatsRouterInstance.get(
  *         description: Unauthorized
  */
 chatsRouterInstance.get(
-  '/:chatId',
+  "/:chatId",
   authMiddleware,
   validate({ params: chatParamsSchema }),
   chatController.getChat
@@ -256,11 +317,10 @@ chatsRouterInstance.get(
  *         description: Unauthorized
  */
 chatsRouterInstance.get(
-  '/:chatId/messages',
+  "/:chatId/messages",
   authMiddleware,
   validate({ params: chatParamsSchema, query: messagesQuerySchema }),
   chatController.getMessages
 );
 
 export const chatsRouter: RouterType = chatsRouterInstance;
-

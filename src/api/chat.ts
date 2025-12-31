@@ -154,4 +154,17 @@ export const chatApi = {
     );
     return response.data;
   },
+
+  /**
+   * Search user's chats by title
+   * @param query - Search query string
+   * @param limit - Number of results to return (default 20, max 100)
+   */
+  async searchChats(query: string, limit = 20): Promise<ChatListResponse> {
+    const response = await apiClient.get<ChatListResponse>(
+      API_ENDPOINTS.CHAT.SEARCH,
+      { params: { q: query, limit } }
+    );
+    return response.data;
+  },
 };

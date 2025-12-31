@@ -50,6 +50,21 @@ export const chatsQuerySchema = z.object({
 
 export type ChatsQuery = z.infer<typeof chatsQuerySchema>;
 
+// Search query schema
+export const searchQuerySchema = z.object({
+  q: z.string().min(1),
+  limit: z.string().transform(Number).optional(),
+  offset: z.string().transform(Number).optional(),
+});
+
+export type SearchQuery = z.infer<typeof searchQuerySchema>;
+
+// Search response type
+export interface SearchResponse {
+  chats: ChatResponse[];
+  total: number;
+}
+
 // Token usage types
 export interface Usage {
   prompt_tokens: number;

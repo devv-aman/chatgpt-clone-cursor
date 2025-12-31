@@ -21,6 +21,7 @@ export const STRINGS = {
     SEARCH_PLACEHOLDER: "Search your chats...",
     SEARCH_SHORTCUT: "⌘K",
     NO_RESULTS: "No chats found",
+    SEARCHING: "Searching...",
   },
   CHAT: {
     NEW_CHAT: "New Chat",

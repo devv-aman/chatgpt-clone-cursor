@@ -95,30 +95,43 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     const { chats } = get();
     const existingState = chats.get(chatId);
 
-    // Don't load if already streaming
-    if (existingState?.status === "streaming") {
+    // Don't load if already streaming or loading
+    if (
+      existingState?.status === "streaming" ||
+      existingState?.status === "loading"
+    ) {
       return;
     }
+
+    // Set loading state before fetching
+    const newChats = new Map(chats);
+    newChats.set(chatId, {
+      ...initialChatSessionState,
+      status: "loading",
+    });
+    set({ chats: newChats });
 
     try {
       const response = await chatApi.getChatMessages(chatId);
       if (response.success) {
-        const newChats = new Map(chats);
-        newChats.set(chatId, {
+        const { chats: currentChats } = get();
+        const updatedChats = new Map(currentChats);
+        updatedChats.set(chatId, {
           ...initialChatSessionState,
           messages: response.data.messages,
           status: "idle",
         });
-        set({ chats: newChats });
+        set({ chats: updatedChats });
       }
     } catch (error) {
-      const newChats = new Map(chats);
-      newChats.set(chatId, {
+      const { chats: currentChats } = get();
+      const updatedChats = new Map(currentChats);
+      updatedChats.set(chatId, {
         ...initialChatSessionState,
         error: (error as Error).message,
         status: "error",
       });
-      set({ chats: newChats });
+      set({ chats: updatedChats });
     }
   },
 

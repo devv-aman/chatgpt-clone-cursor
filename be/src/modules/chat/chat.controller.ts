@@ -1,10 +1,10 @@
-import type { Request, Response, NextFunction } from 'express';
-import { chatService } from './chat.service.js';
-import { HTTP_STATUS } from '../../constants/api.js';
-import { STRINGS } from '../../constants/strings.js';
-import { CHAT_CONSTANTS } from './chat.constants.js';
-import { UnauthorizedError } from '../../utils/errors.js';
-import { ERROR_MESSAGES, ERROR_CODES } from '../../constants/errors.js';
+import type { Request, Response, NextFunction } from "express";
+import { chatService } from "./chat.service.js";
+import { HTTP_STATUS } from "../../constants/api.js";
+import { STRINGS } from "../../constants/strings.js";
+import { CHAT_CONSTANTS } from "./chat.constants.js";
+import { UnauthorizedError } from "../../utils/errors.js";
+import { ERROR_MESSAGES, ERROR_CODES } from "../../constants/errors.js";
 import type {
   StreamChatInput,
   ChatParams,
@@ -12,9 +12,10 @@ import type {
   SSEEvent,
   MessagesResponse,
   ChatsResponse,
-} from './chat.schema.js';
-import type { ApiResponse } from '../../types/common.types.js';
-import type { Chat } from '../../db/types.js';
+  SearchResponse,
+} from "./chat.schema.js";
+import type { ApiResponse } from "../../types/common.types.js";
+import type { Chat } from "../../db/types.js";
 
 const sendSSEEvent = (res: Response, event: SSEEvent): void => {
   res.write(`data: ${JSON.stringify(event)}\n\n`);
@@ -39,15 +40,18 @@ export const streamChat = async (
     const userId = requireUser(req);
 
     // Set SSE headers
-    res.setHeader('Content-Type', CHAT_CONSTANTS.SSE.HEADERS.CONTENT_TYPE);
-    res.setHeader('Cache-Control', CHAT_CONSTANTS.SSE.HEADERS.CACHE_CONTROL);
-    res.setHeader('Connection', CHAT_CONSTANTS.SSE.HEADERS.CONNECTION);
-    res.setHeader('X-Accel-Buffering', CHAT_CONSTANTS.SSE.HEADERS.X_ACCEL_BUFFERING);
+    res.setHeader("Content-Type", CHAT_CONSTANTS.SSE.HEADERS.CONTENT_TYPE);
+    res.setHeader("Cache-Control", CHAT_CONSTANTS.SSE.HEADERS.CACHE_CONTROL);
+    res.setHeader("Connection", CHAT_CONSTANTS.SSE.HEADERS.CONNECTION);
+    res.setHeader(
+      "X-Accel-Buffering",
+      CHAT_CONSTANTS.SSE.HEADERS.X_ACCEL_BUFFERING
+    );
     res.flushHeaders();
 
     // Handle client disconnect
     let isClientConnected = true;
-    req.on('close', () => {
+    req.on("close", () => {
       isClientConnected = false;
     });
 
@@ -69,7 +73,7 @@ export const streamChat = async (
     if (res.headersSent) {
       sendSSEEvent(res, {
         type: CHAT_CONSTANTS.SSE.EVENT_TYPES.ERROR,
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : "Unknown error",
       });
       res.end();
     } else {
@@ -108,7 +112,9 @@ export const getChats = async (
     const limitParam = req.query.limit as string | undefined;
     const offsetParam = req.query.offset as string | undefined;
     const limit = Math.min(
-      limitParam ? parseInt(limitParam, 10) : CHAT_CONSTANTS.PAGINATION.DEFAULT_LIMIT,
+      limitParam
+        ? parseInt(limitParam, 10)
+        : CHAT_CONSTANTS.PAGINATION.DEFAULT_LIMIT,
       CHAT_CONSTANTS.PAGINATION.MAX_LIMIT
     );
     const offset = offsetParam ? parseInt(offsetParam, 10) : 0;
@@ -157,16 +163,53 @@ export const getMessages = async (
     const limitParam = req.query.limit as string | undefined;
     const offsetParam = req.query.offset as string | undefined;
     const limit = Math.min(
-      limitParam ? parseInt(limitParam, 10) : CHAT_CONSTANTS.PAGINATION.DEFAULT_LIMIT,
+      limitParam
+        ? parseInt(limitParam, 10)
+        : CHAT_CONSTANTS.PAGINATION.DEFAULT_LIMIT,
       CHAT_CONSTANTS.PAGINATION.MAX_LIMIT
     );
     const offset = offsetParam ? parseInt(offsetParam, 10) : 0;
 
-    const result = await chatService.getMessagesForChat(chatId, userId, limit, offset);
+    const result = await chatService.getMessagesForChat(
+      chatId,
+      userId,
+      limit,
+      offset
+    );
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
       message: STRINGS.CHAT.MESSAGES_FETCHED,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const searchChats = async (
+  req: Request,
+  res: Response<ApiResponse<SearchResponse>>,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = requireUser(req);
+    const query = req.query.q as string;
+    const limitParam = req.query.limit as string | undefined;
+    const offsetParam = req.query.offset as string | undefined;
+    const limit = Math.min(
+      limitParam
+        ? parseInt(limitParam, 10)
+        : CHAT_CONSTANTS.PAGINATION.DEFAULT_LIMIT,
+      CHAT_CONSTANTS.PAGINATION.MAX_LIMIT
+    );
+    const offset = offsetParam ? parseInt(offsetParam, 10) : 0;
+
+    const result = await chatService.searchChats(userId, query, limit, offset);
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: STRINGS.CHAT.SEARCH_RESULTS,
       data: result,
     });
   } catch (error) {
@@ -180,4 +223,5 @@ export const chatController = {
   getChats,
   getChat,
   getMessages,
+  searchChats,
 };
