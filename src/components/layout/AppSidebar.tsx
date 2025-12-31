@@ -12,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { ChatHistoryList } from "./ChatHistoryList";
@@ -55,19 +56,22 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="border-b border-sidebar-border">
+        <SidebarHeader className="">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild>
-                <Link to={ROUTES.CHAT}>
-                  <div className="flex aspect-square size-8 items-center justify-center">
-                    <OpenAI size={24} />
-                  </div>
-                  <div className="flex flex-col gap-0.5 leading-none">
-                    <span className="font-semibold">{STRINGS.APP_NAME}</span>
-                  </div>
-                </Link>
-              </SidebarMenuButton>
+              <div className="flex w-full items-center">
+                <SidebarMenuButton size="lg" asChild className="flex-1">
+                  <Link to={ROUTES.CHAT}>
+                    <div className="flex aspect-square size-8 items-center justify-center">
+                      <OpenAI size={24} />
+                    </div>
+                    <div className="flex flex-col gap-0.5 leading-none">
+                      <span className="font-semibold">{STRINGS.APP_NAME}</span>
+                    </div>
+                  </Link>
+                </SidebarMenuButton>
+                <SidebarTrigger className="group-data-[collapsible=icon]:hidden" />
+              </div>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>

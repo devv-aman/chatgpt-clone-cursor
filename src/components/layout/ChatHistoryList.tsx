@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import { format } from "date-fns";
-import { MessageSquare, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useChatStore } from "@/stores";
 import { getRoutePath } from "@/constants/routes";
 import { STRINGS } from "@/constants/strings";
@@ -78,11 +78,11 @@ export function ChatHistoryList() {
                 asChild
                 isActive={activeChatId === chat.id}
                 tooltip={chat.title}
+                className="h-auto py-1 px-2 data-[active=true]:border data-[active=true]:border-sidebar-border data-[active=true]:shadow-sm"
               >
                 <Link to={getRoutePath.chat(chat.id)}>
-                  <MessageSquare className="size-4" />
                   <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
-                    <span className="truncate font-medium">
+                    <span className="truncate font-medium text-xs">
                       {chat.isStreaming ? (
                         <span className="flex items-center gap-1.5">
                           <span className="truncate">{chat.title}</span>
@@ -96,7 +96,7 @@ export function ChatHistoryList() {
                         chat.title
                       )}
                     </span>
-                    <span className="truncate text-xs text-muted-foreground">
+                    <span className="truncate text-[0.65rem] text-muted-foreground">
                       {formatChatDate(chat.updated_at)}
                     </span>
                   </div>

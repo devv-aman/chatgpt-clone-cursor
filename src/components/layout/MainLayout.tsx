@@ -1,9 +1,5 @@
 import { Outlet } from "react-router-dom";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { ModelDropdown } from "./ModelDropdown";
 import { ThemeToggle } from "./ThemeToggle";
@@ -16,8 +12,7 @@ function MainLayoutContent() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset className="overflow-hidden">
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
-          <SidebarTrigger className="-ml-1" />
+        <header className="flex h-14 shrink-0 items-center gap-2 px-4">
           <ModelDropdown value={model} onChange={setModel} />
           <div className="ml-auto">
             <ThemeToggle />
